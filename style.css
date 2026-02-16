@@ -1,0 +1,647 @@
+/* ═══════════════════════════════════════════════════════════
+   Naruto Hand Sign Jutsu Detector — Ninja Theme Stylesheet
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700&display=swap');
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-panel: rgba(15, 15, 25, 0.92);
+  --bg-panel-hover: rgba(25, 25, 40, 0.95);
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888aa;
+  --text-muted: #555570;
+  --accent-red: #ff3333;
+  --accent-orange: #ff6600;
+  --accent-blue: #4488ff;
+  --accent-purple: #8855cc;
+  --accent-cyan: #00cccc;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --glow-red: 0 0 20px rgba(255, 50, 50, 0.3);
+  --glow-blue: 0 0 20px rgba(68, 136, 255, 0.3);
+  --glow-purple: 0 0 20px rgba(136, 85, 204, 0.3);
+  --glow-cyan: 0 0 20px rgba(0, 204, 204, 0.3);
+  --font-primary: 'Rajdhani', sans-serif;
+  --font-display: 'Orbitron', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ─── Main Layout ─────────────────────────────────────────── */
+
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── Video / Canvas Layers ───────────────────────────────── */
+
+#video-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+#webcam {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror */
+}
+
+#landmark-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#effects-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ─── Start Screen ────────────────────────────────────────── */
+
+#start-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a15 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  transition: opacity 0.8s ease;
+}
+
+#start-screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#start-screen h1 {
+  font-family: var(--font-display);
+  font-size: 42px;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(255, 70, 0, 0.4));
+}
+
+#start-screen .subtitle {
+  font-size: 18px;
+  color: var(--text-secondary);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+#start-btn {
+  margin-top: 20px;
+  padding: 16px 48px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  border: 2px solid var(--accent-red);
+  background: transparent;
+  color: var(--accent-red);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+#start-btn:hover {
+  background: var(--accent-red);
+  color: #fff;
+  box-shadow: var(--glow-red);
+}
+
+#start-btn::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(transparent, rgba(255, 50, 50, 0.1), transparent);
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.start-instructions {
+  max-width: 500px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ─── Current Sign Display ────────────────────────────────── */
+
+#current-sign {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  text-align: center;
+  padding: 12px 32px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  min-width: 250px;
+  transition: all 0.3s ease;
+}
+
+#current-sign .sign-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+#current-sign .sign-name {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  text-shadow: 0 0 20px rgba(0, 204, 204, 0.5);
+  transition: all 0.2s ease;
+}
+
+#current-sign .sign-emoji {
+  font-size: 36px;
+  margin-right: 8px;
+  filter: drop-shadow(0 0 8px rgba(0, 204, 204, 0.3));
+}
+
+#current-sign .sign-japanese {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+#current-sign .confidence-bar {
+  margin-top: 8px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#current-sign .confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+  border-radius: 2px;
+  transition: width 0.15s ease;
+  box-shadow: 0 0 10px rgba(0, 204, 204, 0.5);
+}
+
+#current-sign.sign-active {
+  border-color: var(--accent-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+/* ─── Sequence Progress ───────────────────────────────────── */
+
+#sequence-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  text-align: center;
+  padding: 16px 24px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  min-width: 400px;
+  max-width: 90vw;
+  transition: all 0.5s ease;
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+}
+
+#sequence-panel.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#sequence-panel .seq-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+#sequence-panel .seq-matching {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--accent-orange);
+  margin-bottom: 10px;
+}
+
+#sequence-signs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.seq-sign {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 50px;
+  transition: all 0.3s ease;
+}
+
+.seq-sign.completed {
+  background: rgba(0, 204, 204, 0.15);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 204, 204, 0.2);
+}
+
+.seq-sign.current {
+  background: rgba(255, 150, 0, 0.15);
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 10px rgba(255, 150, 0, 0.2);
+  animation: pulse 1.5s infinite;
+}
+
+.seq-sign .sign-icon {
+  font-size: 20px;
+}
+
+.seq-sign .sign-text {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.seq-arrow {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ─── Jutsu Reference Panel ───────────────────────────────── */
+
+#jutsu-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 20;
+  width: 280px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease;
+}
+
+#jutsu-panel.collapsed {
+  transform: translateX(calc(100% + 20px));
+}
+
+#jutsu-panel h2 {
+  font-family: var(--font-display);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.jutsu-card {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
+}
+
+.jutsu-card:hover {
+  background: var(--bg-panel-hover);
+}
+
+.jutsu-card.matching {
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 15px rgba(255, 100, 0, 0.15);
+}
+
+.jutsu-card.completed {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(0, 204, 204, 0.2);
+}
+
+.jutsu-card .jutsu-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.jutsu-card .jutsu-japanese {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.jutsu-card .jutsu-element {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.jutsu-card .jutsu-element.fire { background: rgba(255,68,0,0.2); color: #ff6633; }
+.jutsu-card .jutsu-element.lightning { background: rgba(68,170,255,0.2); color: #66bbff; }
+.jutsu-card .jutsu-element.none { background: rgba(170,136,255,0.2); color: #bb99ff; }
+.jutsu-card .jutsu-element.water { background: rgba(0,136,255,0.2); color: #44aaff; }
+
+.jutsu-card .jutsu-signs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.jutsu-card .jutsu-sign-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+}
+
+.jutsu-card .jutsu-sign-tag.hit {
+  background: rgba(0, 204, 204, 0.2);
+  color: var(--accent-cyan);
+}
+
+.jutsu-progress-bar {
+  margin-top: 6px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.jutsu-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-orange), var(--accent-red));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ─── Toggle Buttons ──────────────────────────────────────── */
+
+#toggle-panel {
+  position: absolute;
+  top: 20px;
+  right: 310px;
+  z-index: 21;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  font-family: var(--font-primary);
+}
+
+#toggle-panel:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-cyan);
+}
+
+#toggle-panel.shifted {
+  right: 20px;
+}
+
+/* ─── Debug Panel ─────────────────────────────────────────── */
+
+#debug-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 20;
+  padding: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: pre;
+  line-height: 1.4;
+  max-width: 350px;
+  max-height: 50vh;
+  overflow-y: auto;
+  transition: opacity 0.3s ease;
+}
+
+#debug-panel.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#debug-toggle {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 21;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  font-family: var(--font-primary);
+  transition: all 0.3s ease;
+}
+
+#debug-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-purple);
+}
+
+/* ─── Stats Bar ───────────────────────────────────────────── */
+
+#stats-bar {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 20;
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+#stats-bar .stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#stats-bar .stat-value {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ─── Jutsu Complete Overlay ──────────────────────────────── */
+
+#jutsu-complete {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+#jutsu-complete.visible {
+  opacity: 1;
+}
+
+#jutsu-complete .jutsu-complete-name {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 0 40px currentColor, 0 0 80px currentColor;
+  animation: jutsuFlash 0.5s ease-out;
+}
+
+#jutsu-complete .jutsu-complete-japanese {
+  font-size: 20px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  letter-spacing: 3px;
+}
+
+@keyframes jutsuFlash {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  #jutsu-panel {
+    width: 240px;
+    right: 10px;
+    top: 10px;
+    font-size: 12px;
+  }
+
+  #current-sign .sign-name {
+    font-size: 24px;
+  }
+
+  #sequence-panel {
+    min-width: auto;
+    width: 95vw;
+    padding: 10px;
+  }
+
+  #debug-panel {
+    font-size: 9px;
+    max-width: 250px;
+  }
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ninja Hand Sign Jutsu Detector</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Start Screen -->
+    <div id="start-screen">
+      <h1>忍術 Jutsu</h1>
+      <div class="subtitle">Hand Sign Detection System</div>
+      <button id="start-btn">Activate Sharingan</button>
+      <div class="start-instructions">
+        <p>Perform Naruto hand signs in front of your webcam to cast jutsus.</p>
+        <p>Complete the correct sign sequence to trigger a visual jutsu effect.</p>
+        <p style="margin-top: 10px; color: #666;">
+          Press <strong>D</strong> for debug · <strong>J</strong> to toggle jutsu list · <strong>R</strong> to reset sequence
+          <br>Keys <strong>1-4</strong> to test effects
+        </p>
+      </div>
+    </div>
+
+    <!-- Video Layer -->
+    <div id="video-container">
+      <video id="webcam" autoplay playsinline></video>
+      <canvas id="landmark-canvas"></canvas>
+    </div>
+
+    <!-- Effects Canvas -->
+    <canvas id="effects-canvas"></canvas>
+
+    <!-- Current Detected Sign -->
+    <div id="current-sign">
+      <div class="sign-label">Detected Sign</div>
+      <div>
+        <span class="sign-emoji">✋</span>
+        <span class="sign-name">READY</span>
+      </div>
+      <div class="sign-japanese"></div>
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Sequence Progress -->
+    <div id="sequence-panel">
+      <div class="seq-title">Jutsu Sequence</div>
+      <div id="seq-matching" class="seq-matching"></div>
+      <div id="sequence-signs"></div>
+    </div>
+
+    <!-- Jutsu Reference Panel -->
+    <div id="jutsu-panel">
+      <h2>📜 Jutsu List</h2>
+      <div id="jutsu-list"></div>
+    </div>
+
+    <!-- Toggle Buttons -->
+    <button id="toggle-panel">📜 Hide Jutsu List</button>
+    <button id="debug-toggle">🔧 Show Debug</button>
+
+    <!-- Debug Panel -->
+    <div id="debug-panel" class="hidden"></div>
+
+    <!-- Stats Bar -->
+    <div id="stats-bar">
+      <div class="stat">FPS: <span class="stat-value" id="stat-fps">0</span></div>
+      <div class="stat">Particles: <span class="stat-value" id="stat-particles">0</span></div>
+      <div class="stat">State: <span class="stat-value" id="stat-state">Ready</span></div>
+    </div>
+
+    <!-- Jutsu Complete Overlay -->
+    <div id="jutsu-complete">
+      <div class="jutsu-complete-name"></div>
+      <div class="jutsu-complete-japanese"></div>
+    </div>
+
+  </div>
+
+  <!-- MediaPipe Dependencies (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <!-- App Scripts -->
+  <script src="hand-signs.js"></script>
+  <script src="jutsu-detector.js"></script>
+  <script src="effects.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
