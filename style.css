@@ -605,6 +605,236 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* ─── Hand Sign Guide Button ──────────────────────────────── */
+
+#guide-toggle {
+  position: absolute;
+  bottom: 20px;
+  left: 160px;
+  z-index: 21;
+  padding: 8px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  font-family: var(--font-primary);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+#guide-toggle:hover {
+  color: var(--accent-orange);
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 12px rgba(255, 100, 0, 0.2);
+}
+
+/* ─── Hand Sign Guide Modal ───────────────────────────────── */
+
+.guide-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+}
+
+.guide-modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.guide-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+}
+
+.guide-content {
+  position: relative;
+  width: 90vw;
+  max-width: 960px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: linear-gradient(135deg, #0d0d18 0%, #141425 50%, #0d0d18 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 200, 200, 0.05);
+  padding: 28px;
+}
+
+.guide-header {
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.guide-header h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgba(255, 100, 0, 0.3));
+  margin-bottom: 6px;
+}
+
+.guide-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.guide-close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.guide-close:hover {
+  background: rgba(255, 50, 50, 0.15);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+/* ─── Guide Grid ──────────────────────────────────────────── */
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.guide-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 16px 12px 14px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.guide-card:hover {
+  background: rgba(0, 200, 200, 0.04);
+  border-color: rgba(0, 200, 200, 0.2);
+  box-shadow: 0 0 20px rgba(0, 200, 200, 0.08);
+  transform: translateY(-2px);
+}
+
+.guide-card-svg {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-card-svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.guide-card-emoji {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.guide-card-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  text-shadow: 0 0 10px rgba(0, 200, 200, 0.3);
+  letter-spacing: 1px;
+}
+
+.guide-card-japanese {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.guide-card-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
+/* ─── Inline Sign Images in Jutsu Cards ───────────────────── */
+
+.jutsu-sign-tag {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 3px;
+}
+
+.jutsu-sign-inline-svg {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.jutsu-sign-inline-svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.jutsu-sign-tag.hit .jutsu-sign-inline-svg {
+  opacity: 1;
+}
+
+/* ─── Inline Sign Images in Sequence Panel ────────────────── */
+
+.seq-sign-svg {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 2px;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.seq-sign-svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.seq-sign.completed .seq-sign-svg,
+.seq-sign.current .seq-sign-svg {
+  opacity: 1;
+}
+
 /* ─── Scrollbar ───────────────────────────────────────────── */
 
 ::-webkit-scrollbar {
@@ -643,5 +873,35 @@ body {
   #debug-panel {
     font-size: 9px;
     max-width: 250px;
+  }
+
+  .guide-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .guide-content {
+    padding: 18px;
+    width: 95vw;
+    max-height: 92vh;
+  }
+
+  .guide-card-svg {
+    width: 80px;
+    height: 80px;
+  }
+
+  .guide-card-name {
+    font-size: 13px;
+  }
+
+  .guide-card-desc {
+    font-size: 10px;
+  }
+
+  #guide-toggle {
+    bottom: 50px;
+    font-size: 11px;
+    padding: 6px 10px;
   }
 }

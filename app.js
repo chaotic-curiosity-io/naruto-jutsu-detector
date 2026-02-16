@@ -27,6 +27,12 @@
   const statsBar = document.getElementById('stats-bar');
   const jutsuComplete = document.getElementById('jutsu-complete');
 
+  const guideToggle = document.getElementById('guide-toggle');
+  const guideModal = document.getElementById('guide-modal');
+  const guideGrid = document.getElementById('guide-grid');
+  const guideClose = guideModal.querySelector('.guide-close');
+  const guideBackdrop = guideModal.querySelector('.guide-backdrop');
+
   const landmarkCtx = landmarkCanvas.getContext('2d');
   let showDebug = false;
   let showJutsuPanel = true;
@@ -38,10 +44,17 @@
   // ─── MediaPipe Setup ────────────────────────────────────────────
 
   let hands = null;
+  let faceMesh = null;
+  let selfieSegmentation = null;
   let camera = null;
 
+  // Cached face/segmentation data (updated asynchronously)
+  let cachedFaceLandmarks = null;   // mirrored face landmarks array
+  let cachedSegmentationMask = null; // ImageData or canvas from SelfieSegmentation
+  let faceFrameCounter = 0;         // throttle FaceMesh to every 3rd frame
+
   async function initMediaPipe() {
-    // Import MediaPipe Hands
+    // ── Hands ──
     hands = new Hands({
       locateFile: (file) => {
         return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
@@ -57,11 +70,67 @@
 
     hands.onResults(onResults);
 
-    // Start camera
+    // ── FaceMesh ──
+    faceMesh = new FaceMesh({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+      }
+    });
+
+    faceMesh.setOptions({
+      maxNumFaces: 1,
+      refineLandmarks: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    faceMesh.onResults((results) => {
+      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+        const raw = results.multiFaceLandmarks[0];
+        // Mirror x to match the CSS-mirrored video
+        cachedFaceLandmarks = raw.map(lm => ({
+          x: 1.0 - lm.x,
+          y: lm.y,
+          z: lm.z
+        }));
+      } else {
+        cachedFaceLandmarks = null;
+      }
+    });
+
+    // ── SelfieSegmentation ──
+    selfieSegmentation = new SelfieSegmentation({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+      }
+    });
+
+    selfieSegmentation.setOptions({
+      modelSelection: 1 // 1 = landscape model (faster)
+    });
+
+    selfieSegmentation.onResults((results) => {
+      // results.segmentationMask is a canvas/image where person pixels ~ 1, bg ~ 0
+      cachedSegmentationMask = results.segmentationMask || null;
+    });
+
+    // Start camera — sends frames to Hands every frame, FaceMesh every 3rd, Segmentation every 2nd
     camera = new Camera(webcam, {
       onFrame: async () => {
-        if (isRunning) {
-          await hands.send({ image: webcam });
+        if (!isRunning) return;
+
+        // Always run hands (core detection)
+        await hands.send({ image: webcam });
+
+        // FaceMesh: every 3rd frame for mouth position
+        faceFrameCounter++;
+        if (faceFrameCounter % 3 === 0) {
+          faceMesh.send({ image: webcam }).catch(() => {});
+        }
+
+        // SelfieSegmentation: every 2nd frame
+        if (faceFrameCounter % 2 === 0) {
+          selfieSegmentation.send({ image: webcam }).catch(() => {});
         }
       },
       width: 1280,
@@ -88,6 +157,9 @@
 
     let bestClassification = null;
 
+    // Collect mirrored landmarks for the effects system
+    const mirroredLandmarkSets = [];
+
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       for (let i = 0; i < results.multiHandLandmarks.length; i++) {
         const landmarks = results.multiHandLandmarks[i];
@@ -95,6 +167,17 @@
 
         // Draw landmarks
         drawLandmarks(landmarks, handedness);
+
+        // Build mirrored landmarks for effects system
+        // MediaPipe raw: x=0 is left of raw (un-mirrored) video
+        // Effects canvas is NOT mirrored, overlays the CSS-mirrored video
+        // So we mirror x: screenX = 1.0 - landmark.x
+        const mirrored = landmarks.map(lm => ({
+          x: 1.0 - lm.x,
+          y: lm.y,
+          z: lm.z
+        }));
+        mirroredLandmarkSets.push(mirrored);
 
         // Classify hand sign
         const classification = HandSignClassifier.classify(landmarks);
@@ -105,6 +188,16 @@
     }
 
     landmarkCtx.restore();
+
+    // Pass tracking data to Effects each frame (including face + segmentation)
+    Effects.setTrackingData({
+      landmarks: mirroredLandmarkSets.length > 0 ? mirroredLandmarkSets : null,
+      videoElement: webcam,
+      canvasWidth: landmarkCanvas.width,
+      canvasHeight: landmarkCanvas.height,
+      faceLandmarks: cachedFaceLandmarks,
+      segmentationMask: cachedSegmentationMask
+    });
 
     // Update sign display
     updateSignDisplay(bestClassification);
@@ -257,7 +350,10 @@
       if (i < sequence.length) cls += ' completed';
       else if (i === sequence.length) cls += ' current';
 
+      const seqSvg = typeof HandSignImages !== 'undefined' ? `<span class="seq-sign-svg">${HandSignImages.getInlineSVG(sign)}</span>` : '';
+
       html += `<span class="${cls}">
+        ${seqSvg}
         <span class="sign-icon">${HandSignClassifier.signSymbols[sign]}</span>
         <span class="sign-text">${sign}</span>
       </span>`;
@@ -340,7 +436,10 @@
         <div class="jutsu-japanese">${jutsu.japanese}</div>
         <span class="jutsu-element ${jutsu.element.toLowerCase()}">${jutsu.element}</span>
         <div class="jutsu-signs">
-          ${jutsu.signs.map(s => `<span class="jutsu-sign-tag">${HandSignClassifier.signSymbols[s]} ${s}</span>`).join('')}
+          ${jutsu.signs.map(s => {
+            const inlineSvg = typeof HandSignImages !== 'undefined' ? HandSignImages.getInlineSVG(s) : '';
+            return `<span class="jutsu-sign-tag"><span class="jutsu-sign-inline-svg">${inlineSvg}</span>${HandSignClassifier.signSymbols[s]} ${s}</span>`;
+          }).join('')}
         </div>
         <div class="jutsu-progress-bar"><div class="jutsu-progress-fill" style="width: 0%"></div></div>
       `;
@@ -377,13 +476,54 @@
     debugToggle.textContent = showDebug ? '🔧 Hide Debug' : '🔧 Show Debug';
   });
 
+  // ─── Hand Sign Guide Modal ─────────────────────────────────────
+
+  function buildGuideGrid() {
+    const allSigns = HandSignImages.getAllSigns();
+    guideGrid.innerHTML = '';
+    for (const sign of allSigns) {
+      const card = document.createElement('div');
+      card.className = 'guide-card';
+      card.innerHTML = `
+        <div class="guide-card-svg">${sign.svg}</div>
+        <div class="guide-card-emoji">${sign.emoji}</div>
+        <div class="guide-card-name">${sign.name}</div>
+        <div class="guide-card-japanese">${sign.japanese}</div>
+        <div class="guide-card-desc">${sign.description}</div>
+      `;
+      guideGrid.appendChild(card);
+    }
+  }
+
+  function openGuide() {
+    if (guideGrid.children.length === 0) buildGuideGrid();
+    guideModal.classList.remove('hidden');
+  }
+
+  function closeGuide() {
+    guideModal.classList.add('hidden');
+  }
+
+  guideToggle.addEventListener('click', openGuide);
+  guideClose.addEventListener('click', closeGuide);
+  guideBackdrop.addEventListener('click', closeGuide);
+
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
+    // Close guide modal on Escape
+    if (e.key === 'Escape') {
+      closeGuide();
+      return;
+    }
     if (e.key === 'd' || e.key === 'D') {
       debugToggle.click();
     }
     if (e.key === 'j' || e.key === 'J') {
       togglePanelBtn.click();
+    }
+    if (e.key === 'g' || e.key === 'G') {
+      if (guideModal.classList.contains('hidden')) openGuide();
+      else closeGuide();
     }
     if (e.key === 'r' || e.key === 'R') {
       JutsuDetector.resetSequence('manual');

@@ -19,7 +19,7 @@
         <p>Perform Naruto hand signs in front of your webcam to cast jutsus.</p>
         <p>Complete the correct sign sequence to trigger a visual jutsu effect.</p>
         <p style="margin-top: 10px; color: #666;">
-          Press <strong>D</strong> for debug · <strong>J</strong> to toggle jutsu list · <strong>R</strong> to reset sequence
+          Press <strong>D</strong> for debug · <strong>J</strong> to toggle jutsu list · <strong>G</strong> for hand sign guide · <strong>R</strong> to reset sequence
           <br>Keys <strong>1-4</strong> to test effects
         </p>
       </div>
@@ -62,7 +62,23 @@
 
     <!-- Toggle Buttons -->
     <button id="toggle-panel">📜 Hide Jutsu List</button>
+    <button id="guide-toggle">🤲 Hand Sign Guide</button>
     <button id="debug-toggle">🔧 Show Debug</button>
+
+    <!-- Hand Sign Guide Modal -->
+    <div id="guide-modal" class="guide-modal hidden">
+      <div class="guide-backdrop"></div>
+      <div class="guide-content">
+        <div class="guide-header">
+          <h2>🤲 Hand Sign Guide</h2>
+          <p class="guide-subtitle">Single-hand gestures as seen by the camera</p>
+          <button class="guide-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="guide-grid" id="guide-grid">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+    </div>
 
     <!-- Debug Panel -->
     <div id="debug-panel" class="hidden"></div>
@@ -87,9 +103,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
   <!-- App Scripts -->
   <script src="hand-signs.js"></script>
+  <script src="hand-sign-images.js"></script>
   <script src="jutsu-detector.js"></script>
   <script src="effects.js"></script>
   <script src="app.js"></script>
